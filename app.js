@@ -2,6 +2,7 @@ import express from "express";
 
 import { createLookupCounter } from "./lib/lookup-counter.js";
 import { loadTickerIndex } from "./lib/ticker-index.js";
+import { errorHandler, notFound } from "./middleware/errors.js";
 import { createTickerRouter } from "./routes/ticker.js";
 
 const defaultTickers = loadTickerIndex();
@@ -12,9 +13,10 @@ export function createApp({
 } = {}) {
   const app = express();
 
-  app.use(express.json());
-
   app.use("/ticker", createTickerRouter({ tickers, counter }));
+
+  app.use(notFound);
+  app.use(errorHandler);
 
   return app;
 }
