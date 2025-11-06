@@ -1,23 +1,17 @@
-import fs from "fs";
+import { loadTickerIndex } from "../lib/ticker-index.js";
 
+const tickers = loadTickerIndex();
 const companyMap = {};
 
 export const getTickerById = (req, res) => {
   const { tickerId } = req.params;
-  const { data: companies } = JSON.parse(
-    fs.readFileSync("./data.json", "utf8")
-  );
-
-  const company = companies.find((company) => {
-    const companyTicker = company[2];
-    return companyTicker.toLowerCase() === tickerId.toLowerCase();
-  });
+  const company = tickers.findBySymbol(tickerId);
 
   if (!company) {
     return res.status(404).send("Ticker not found");
   }
 
-  const [cik, name, ticker, exchange] = company;
+  const { cik, name, ticker, exchange } = company;
   companyMap[tickerId] = (companyMap[tickerId] || 0) + 1;
 
   res.status(200).json({ cik, name, ticker, exchange });
