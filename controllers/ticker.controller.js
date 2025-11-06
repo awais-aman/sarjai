@@ -3,6 +3,7 @@ import { readIntParam } from "../lib/query-params.js";
 const MAX_QUERY_LENGTH = 50;
 const MAX_PAGE_SIZE = 50;
 const MAX_OFFSET = 10_000;
+const MAX_ACTIVITY_SIZE = 100;
 
 // Listed symbols are short; class shares use '-' in the SEC data
 // (BRK-B), while many clients write them with '.' (BRK.B).
@@ -70,9 +71,22 @@ export function createTickerController({ tickers, counter }) {
   };
 
   const getTickerActivity = (req, res) => {
-    res
-      .status(200)
-      .json(counter.ranked().map(([ticker, count]) => ({ [ticker]: count })));
+    const limit = readIntParam(req.query.limit, {
+      name: "limit",
+      min: 1,
+      max: MAX_ACTIVITY_SIZE,
+      fallback: 10,
+    });
+    if (limit.error) {
+      return res.status(400).json({ error: limit.error });
+    }
+
+    res.status(200).json(
+      counter
+        .ranked()
+        .slice(0, limit.value)
+        .map(([ticker, count]) => ({ [ticker]: count }))
+    );
   };
 
   return { getTickerById, getTickerActivity, searchTickers };

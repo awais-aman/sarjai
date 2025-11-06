@@ -61,6 +61,26 @@ describe("GET /ticker/activity", () => {
     assert.deepEqual(res.body, [{ MSFT: 3 }, { AAPL: 1 }]);
   });
 
+  it("returns only the top entries up to limit", async () => {
+    const app = createApp();
+    for (const symbol of ["MSFT", "MSFT", "AAPL", "NVDA", "NVDA", "NVDA"]) {
+      await request(app).get(`/ticker/${symbol}`).expect(200);
+    }
+    const res = await request(app)
+      .get("/ticker/activity")
+      .query({ limit: 2 })
+      .expect(200);
+    assert.deepEqual(res.body, [{ NVDA: 3 }, { MSFT: 2 }]);
+  });
+
+  it("rejects an out-of-range limit", async () => {
+    const res = await request(createApp())
+      .get("/ticker/activity")
+      .query({ limit: 101 })
+      .expect(400);
+    assert.match(res.body.error, /limit must be between 1 and 100/);
+  });
+
   it("does not count failed lookups", async () => {
     const app = createApp();
     await request(app).get("/ticker/ZZZZZZ").expect(404);
