@@ -1,9 +1,6 @@
 import express from "express";
 
 import { getTickerById, getTickerActivity } from "../controllers/ticker.controller.js";
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
 
 const router = express.Router();
 
