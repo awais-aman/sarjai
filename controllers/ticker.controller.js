@@ -1,28 +1,22 @@
-import { loadTickerIndex } from "../lib/ticker-index.js";
+export function createTickerController({ tickers, counter }) {
+  const getTickerById = (req, res) => {
+    const company = tickers.findBySymbol(req.params.tickerId);
 
-const tickers = loadTickerIndex();
-const companyMap = {};
+    if (!company) {
+      return res.status(404).send("Ticker not found");
+    }
 
-export const getTickerById = (req, res) => {
-  const { tickerId } = req.params;
-  const company = tickers.findBySymbol(tickerId);
+    const { cik, name, ticker, exchange } = company;
+    counter.record(ticker);
 
-  if (!company) {
-    return res.status(404).send("Ticker not found");
-  }
+    res.status(200).json({ cik, name, ticker, exchange });
+  };
 
-  const { cik, name, ticker, exchange } = company;
-  companyMap[tickerId] = (companyMap[tickerId] || 0) + 1;
+  const getTickerActivity = (req, res) => {
+    res
+      .status(200)
+      .json(counter.ranked().map(([ticker, count]) => ({ [ticker]: count })));
+  };
 
-  res.status(200).json({ cik, name, ticker, exchange });
-};
-
-export const getTickerActivity = (req, res) => {
-  const sortedCompanyMap = Object.keys(companyMap).sort(
-    (a, b) => companyMap[b] - companyMap[a]
-  );
-
-  res
-    .status(200)
-    .send(sortedCompanyMap.map((key) => ({ [key]: companyMap[key] })));
-};
+  return { getTickerById, getTickerActivity };
+}

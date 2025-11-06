@@ -24,3 +24,28 @@ describe("GET /ticker/:tickerId", () => {
     await request(createApp()).get("/ticker/ZZZZZZ").expect(404);
   });
 });
+
+describe("GET /ticker/activity", () => {
+  it("starts empty", async () => {
+    const res = await request(createApp()).get("/ticker/activity").expect(200);
+    assert.deepEqual(res.body, []);
+  });
+
+  it("counts different spellings of a ticker as one symbol", async () => {
+    const app = createApp();
+    await request(app).get("/ticker/MSFT").expect(200);
+    await request(app).get("/ticker/msft").expect(200);
+    await request(app).get("/ticker/Msft").expect(200);
+    await request(app).get("/ticker/AAPL").expect(200);
+
+    const res = await request(app).get("/ticker/activity").expect(200);
+    assert.deepEqual(res.body, [{ MSFT: 3 }, { AAPL: 1 }]);
+  });
+
+  it("does not count failed lookups", async () => {
+    const app = createApp();
+    await request(app).get("/ticker/ZZZZZZ").expect(404);
+    const res = await request(app).get("/ticker/activity").expect(200);
+    assert.deepEqual(res.body, []);
+  });
+});
