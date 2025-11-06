@@ -90,6 +90,13 @@ describe("GET /ticker/activity", () => {
 });
 
 describe("error responses", () => {
+  it("sends security headers and hides the framework", async () => {
+    const res = await request(createApp()).get("/ticker/MSFT").expect(200);
+    assert.equal(res.headers["x-content-type-options"], "nosniff");
+    assert.ok(res.headers["content-security-policy"]);
+    assert.equal(res.headers["x-powered-by"], undefined);
+  });
+
   it("answers unknown routes with JSON instead of an HTML page", async () => {
     const res = await request(createApp())
       .get("/tickers/MSFT")

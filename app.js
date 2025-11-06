@@ -1,4 +1,5 @@
 import express from "express";
+import helmet from "helmet";
 
 import { createLookupCounter } from "./lib/lookup-counter.js";
 import { loadTickerIndex } from "./lib/ticker-index.js";
@@ -12,6 +13,8 @@ export function createApp({
   counter = createLookupCounter(),
 } = {}) {
   const app = express();
+
+  app.use(helmet());
 
   app.use("/ticker", createTickerRouter({ tickers, counter }));
 
