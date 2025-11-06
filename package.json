@@ -1,15 +1,19 @@
 {
-  "name": "sarjai",
+  "name": "stock-ticker-lookup-api",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Look up US-listed companies by ticker symbol from the SEC company tickers list",
+  "private": true,
   "license": "MIT",
   "type": "module",
+  "main": "main.js",
+  "engines": {
+    "node": ">=22.13.0 <23"
+  },
   "scripts": {
-    "start": "node main.js",
-    "dev": "nodemon main.js"
+    "start": "node --env-file-if-exists=.env main.js",
+    "dev": "node --watch --env-file-if-exists=.env main.js"
   },
   "dependencies": {
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0"
+    "express": "^5.3.0"
   }
 }
