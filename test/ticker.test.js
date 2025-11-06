@@ -99,3 +99,71 @@ describe("error responses", () => {
     assert.deepEqual(res.body, { error: "Internal server error" });
   });
 });
+
+describe("GET /ticker/search", () => {
+  it("returns ranked matches with paging metadata", async () => {
+    const res = await request(createApp())
+      .get("/ticker/search")
+      .query({ q: "nvda" })
+      .expect(200);
+    assert.equal(res.body.query, "nvda");
+    assert.equal(res.body.limit, 10);
+    assert.equal(res.body.offset, 0);
+    assert.ok(res.body.total >= 1);
+    assert.equal(res.body.results[0].ticker, "NVDA");
+  });
+
+  it("matches partial company names case-insensitively", async () => {
+    const res = await request(createApp())
+      .get("/ticker/search")
+      .query({ q: "berkshire hath" })
+      .expect(200);
+    const found = res.body.results.map((c) => c.ticker);
+    assert.ok(found.includes("BRK-B"));
+  });
+
+  it("pages through results with limit and offset", async () => {
+    const app = createApp();
+    const all = await request(app)
+      .get("/ticker/search")
+      .query({ q: "bank", limit: 50 })
+      .expect(200);
+    const page = await request(app)
+      .get("/ticker/search")
+      .query({ q: "bank", limit: 5, offset: 5 })
+      .expect(200);
+    assert.equal(page.body.total, all.body.total);
+    assert.deepEqual(page.body.results, all.body.results.slice(5, 10));
+  });
+
+  it("returns an empty page past the end", async () => {
+    const res = await request(createApp())
+      .get("/ticker/search")
+      .query({ q: "nvidia", offset: 500 })
+      .expect(200);
+    assert.deepEqual(res.body.results, []);
+  });
+
+  const badQueries = [
+    [{}, /q is required/],
+    [{ q: "   " }, /q is required/],
+    [{ q: "x".repeat(51) }, /q is required/],
+    [{ q: "a", limit: "0" }, /limit must be between 1 and 50/],
+    [{ q: "a", limit: "51" }, /limit must be between 1 and 50/],
+    [{ q: "a", limit: "ten" }, /limit must be a whole number/],
+    [{ q: "a", offset: "-1" }, /offset must be a whole number/],
+  ];
+  for (const [query, message] of badQueries) {
+    it(`rejects ${JSON.stringify(query)} with 400`, async () => {
+      const res = await request(createApp())
+        .get("/ticker/search")
+        .query(query)
+        .expect(400);
+      assert.match(res.body.error, message);
+    });
+  }
+
+  it("rejects a repeated q parameter", async () => {
+    await request(createApp()).get("/ticker/search?q=a&q=b").expect(400);
+  });
+});

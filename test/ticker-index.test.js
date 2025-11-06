@@ -31,4 +31,26 @@ describe("loadTickerIndex", () => {
       process.chdir(original);
     }
   });
+
+  describe("search", () => {
+    it("ranks an exact ticker, then ticker prefixes, then name prefixes", () => {
+      const results = tickers.search("meta");
+      assert.equal(results[0].ticker, "META");
+      const firstNamePrefix = results.findIndex(
+        (c) => !c.ticker.startsWith("META")
+      );
+      assert.ok(firstNamePrefix > 0);
+      assert.ok(results[firstNamePrefix].name.toUpperCase().startsWith("META"));
+    });
+
+    it("finds companies by part of their name", () => {
+      const tickersFound = tickers.search("hathaway").map((c) => c.ticker);
+      assert.ok(tickersFound.includes("BRK-A"));
+      assert.ok(tickersFound.includes("BRK-B"));
+    });
+
+    it("returns nothing when no ticker or name matches", () => {
+      assert.deepEqual(tickers.search("QQQQQQQQ"), []);
+    });
+  });
 });
